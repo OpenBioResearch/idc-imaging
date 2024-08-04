@@ -1,3 +1,8 @@
+"""
+This script extracts metadata from a public AWS S3 bucket and enables matching
+to DICOM images at NCI's Imaging Data Commons (IDC). 
+"""
+
 import io
 from collections import defaultdict
 import boto3
@@ -29,7 +34,7 @@ def validate_study_date(date):
     """Validate and correct study date if it seems unreasonable."""
     try:
         year = int(date[:4])
-        if year < 1900 or year > 2100:  # Assuming the reasonable range of years
+        if year < 1900 or year > 2100:  
             return "Unknown"
         return date
     except ValueError:
@@ -41,14 +46,14 @@ def extract_relevant_metadata(dicom_data, object_key):
         ds = pydicom.dcmread(dicom_data)
         patient_id = ds.get("PatientID", "Unknown")
         metadata = {
-            "S3Key": object_key,  # Include the S3 key in the metadata
+            "S3Key": object_key,  
             "Modality": ds.get("Modality", "Unknown"),
             "StudyDescription": ds.get("StudyDescription", "Unknown"),
             "SeriesDescription": ds.get("SeriesDescription", "Unknown"),
             "Manufacturer": ds.get("Manufacturer", "Unknown"),
             "ImageType": convert_to_hashable(ds.get("ImageType", ["Unknown"])),  # Convert to tuple to be hashable
             "PatientID": patient_id,
-            "CollectionName": extract_collection_name(patient_id),  # Collection name without numeric part
+            "CollectionName": extract_collection_name(patient_id),  
             "StudyDate": validate_study_date(ds.get("StudyDate", "Unknown")),
             "SeriesNumber": ds.get("SeriesNumber", "Unknown"),
             "InstanceNumber": ds.get("InstanceNumber", "Unknown"),
@@ -56,7 +61,6 @@ def extract_relevant_metadata(dicom_data, object_key):
             "SliceThickness": ds.get("SliceThickness", "Unknown")
         }
 
-        # Additional tags if they exist
         additional_tags = {
             "PathologyNumber": (0x0008, 0x1064),
             "ImageComments": "ImageComments",
@@ -117,14 +121,12 @@ def process_dicom_objects(prefix=""):
                             is_diverse = False
                             for category, value in metadata.items():
                                 value = convert_to_hashable(value)
-                                # Debug print statement to identify unhashable types
                                 print(f"Category: {category}, Value: {value}")
                                 if value not in seen_metadata[category]:
                                     is_diverse = True
                                     seen_metadata[category].add(value)
 
                             if is_diverse:
-                                # Display metadata before processing indicator
                                 print(f"\nMetadata for file (S3 Key): {object_key}")
                                 for tag, value in metadata.items():
                                     if isinstance(value, list):
@@ -148,7 +150,6 @@ def process_dicom_objects(prefix=""):
                     if object_count >= 5:
                         break
 
-    # Write to CSV after processing all objects if not enough diverse files were found
     write_metadata_to_csv(metadata_list)
 
 # Start processing from the root of the bucket (no prefix)
