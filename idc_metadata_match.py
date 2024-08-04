@@ -1,17 +1,10 @@
-"""
-This module provides functions to extract and process DICOM metadata
-from objects stored in an AWS S3 bucket. It focuses on retrieving a 
-diverse set of metadata by avoiding duplicates based on specific 
-tags. The module utilizes boto3 for S3 interaction and pydicom for 
-DICOM parsing.  It shows progress bar and also exports a csv.
-"""
-
 import io
 from collections import defaultdict
 import boto3
 import pydicom
 import csv
 import botocore
+import re
 
 # S3 Configuration for the public bucket "idc-open-data-two"
 BUCKET_NAME = "idc-open-data-two"
@@ -22,19 +15,45 @@ s3 = boto3.client(
 # Track metadata categories to ensure diversity
 seen_metadata = defaultdict(set)
 
+def convert_to_hashable(value):
+    """Convert DICOM values to hashable types."""
+    if isinstance(value, pydicom.multival.MultiValue) or isinstance(value, list):
+        return tuple(value)  # Keep as tuple of original values
+    return value
 
-def extract_relevant_metadata(dicom_data):
+def extract_collection_name(patient_id):
+    """Extract collection name by removing numeric part from patient ID."""
+    return re.sub(r'\d+', '', patient_id).rstrip('-')
+
+def validate_study_date(date):
+    """Validate and correct study date if it seems unreasonable."""
+    try:
+        year = int(date[:4])
+        if year < 1900 or year > 2100:  # Assuming the reasonable range of years
+            return "Unknown"
+        return date
+    except ValueError:
+        return "Unknown"
+
+def extract_relevant_metadata(dicom_data, object_key):
     """Extracts relevant DICOM tags and handles potential errors."""
     try:
         ds = pydicom.dcmread(dicom_data)
+        patient_id = ds.get("PatientID", "Unknown")
         metadata = {
+            "S3Key": object_key,  # Include the S3 key in the metadata
             "Modality": ds.get("Modality", "Unknown"),
             "StudyDescription": ds.get("StudyDescription", "Unknown"),
             "SeriesDescription": ds.get("SeriesDescription", "Unknown"),
             "Manufacturer": ds.get("Manufacturer", "Unknown"),
-            "ImageType": ds.get(
-                "ImageType", ["Unknown"]
-            ),  # Convert to list to match desired output
+            "ImageType": convert_to_hashable(ds.get("ImageType", ["Unknown"])),  # Convert to tuple to be hashable
+            "PatientID": patient_id,
+            "CollectionName": extract_collection_name(patient_id),  # Collection name without numeric part
+            "StudyDate": validate_study_date(ds.get("StudyDate", "Unknown")),
+            "SeriesNumber": ds.get("SeriesNumber", "Unknown"),
+            "InstanceNumber": ds.get("InstanceNumber", "Unknown"),
+            "BodyPartExamined": ds.get("BodyPartExamined", "Unknown"),
+            "SliceThickness": ds.get("SliceThickness", "Unknown")
         }
 
         # Additional tags if they exist
@@ -57,7 +76,6 @@ def extract_relevant_metadata(dicom_data):
         print(f"Error parsing DICOM data: {e}")
         return None
 
-
 def write_metadata_to_csv(metadata_list, filename="dicom_metadata.csv"):
     """Writes the extracted metadata to a CSV file."""
     if not metadata_list:
@@ -69,7 +87,6 @@ def write_metadata_to_csv(metadata_list, filename="dicom_metadata.csv"):
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(metadata_list)
-
 
 def process_dicom_objects(prefix=""):
     """Processes DICOM objects in the public S3 bucket."""
@@ -94,15 +111,14 @@ def process_dicom_objects(prefix=""):
                     else:
                         dicom_bytes = response["Body"].read()
                         file_like_object = io.BytesIO(dicom_bytes)
-                        metadata = extract_relevant_metadata(file_like_object)
+                        metadata = extract_relevant_metadata(file_like_object, object_key)
 
                         if metadata:
                             is_diverse = False
                             for category, value in metadata.items():
-                                if isinstance(
-                                    value, pydicom.multival.MultiValue
-                                ) and all(isinstance(v, str) for v in value):
-                                    value = hash(tuple(value))
+                                value = convert_to_hashable(value)
+                                # Debug print statement to identify unhashable types
+                                print(f"Category: {category}, Value: {value}")
                                 if value not in seen_metadata[category]:
                                     is_diverse = True
                                     seen_metadata[category].add(value)
@@ -134,7 +150,6 @@ def process_dicom_objects(prefix=""):
 
     # Write to CSV after processing all objects if not enough diverse files were found
     write_metadata_to_csv(metadata_list)
-
 
 # Start processing from the root of the bucket (no prefix)
 process_dicom_objects()
