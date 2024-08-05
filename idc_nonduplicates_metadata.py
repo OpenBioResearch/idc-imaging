@@ -10,10 +10,12 @@ import io
 from collections import defaultdict
 import boto3
 import pydicom
+from botocore import UNSIGNED
+from botocore.client import Config
 
 # S3 Configuration
 BUCKET_NAME = "idc-open-data-two"
-s3 = boto3.client("s3")
+s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
 
 # Track metadata categories to ensure diversity
 seen_metadata = defaultdict(set)
