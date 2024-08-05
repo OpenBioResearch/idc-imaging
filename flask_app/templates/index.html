@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IDC Collections</title>
+</head>
+<body>
+    <h1>Filter IDC Collections</h1>
+    <form id="filter-form">
+        <label for="cancer_type">Select Cancer Type:</label>
+        <select id="cancer_type" name="cancer_type">
+            {% for type in cancer_types %}
+                <option value="{{ type }}">{{ type }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="image_type">Select Image Type:</label>
+        <select id="image_type" name="image_type">
+            {% for type in image_types %}
+                <option value="{{ type }}">{{ type }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <button type="submit">Filter</button>
+    </form>
+    <h2>Filtered Collections</h2>
+    <ul id="collections-list"></ul>
+
+    <script>
+        document.getElementById('filter-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            fetch('/filter', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                const list = document.getElementById('collections-list');
+                list.innerHTML = '';
+                data.forEach(collection => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <strong>ID:</strong> ${collection.collection_id}<br>
+                        <strong>Name:</strong> ${collection.description}<br>
+                        <strong>Cancer Type:</strong> ${collection.cancer_type}<br>
+                        <strong>Image Types:</strong> ${collection.image_types}<br>
+                        <strong>Date Updated:</strong> ${collection.date_updated}<br>
+                        <strong>Location:</strong> ${collection.location}<br>
+                        <strong>Source DOI:</strong> <a href="${collection.source_url}" target="_blank">${collection.source_doi}</a><br>
+                        <strong>Species:</strong> ${collection.species}<br>
+                        <strong>Subject Count:</strong> ${collection.subject_count}<br>
+                        <strong>Supporting Data:</strong> ${collection.supporting_data}
+                    `;
+                    list.appendChild(listItem);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
