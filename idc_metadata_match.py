@@ -137,7 +137,6 @@ def process_dicom_objects(prefix=""):
                                 metadata_list.append(metadata.copy())
                                 object_count += 1
 
-                                # If we've found enough diverse files, write to CSV and exit
                                 if object_count >= 5:
                                     write_metadata_to_csv(metadata_list)
                                     return
