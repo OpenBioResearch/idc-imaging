@@ -1,8 +1,8 @@
 """
-This module provides functions to extract and process DICOM metadata
-from objects stored in an AWS S3 bucket. It focuses on retrieving a 
+This script provides functions to extract and process DICOM metadata
+from an AWS publicly accessible S3 bucket. It focuses on retrieving a 
 diverse set of metadata by avoiding duplicates based on specific 
-tags. The module utilizes boto3 for S3 interaction and pydicom for 
+tags. It uses boto3 for S3 interaction and pydicom for 
 DICOM parsing.
 """
 
@@ -13,22 +13,14 @@ import pydicom
 from botocore import UNSIGNED
 from botocore.client import Config
 
-# S3 Configuration
+# S3 PUBLIC bucket 
 BUCKET_NAME = "idc-open-data-two"
 s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
 
-# Track metadata categories to ensure diversity
 seen_metadata = defaultdict(set)
 
-
 def extract_relevant_metadata(dicom_data):
-    """Extracts relevant DICOM tags and handles potential errors.
-
-    Args:
-        dicom_data: DICOM data as a file-like object.
-
-    Returns:
-        A dictionary containing the extracted metadata, or None if an error occurs.
+    """Extracts relevant DICOM tags .
     """
     try:
         ds = pydicom.dcmread(dicom_data)
@@ -39,8 +31,6 @@ def extract_relevant_metadata(dicom_data):
             "Manufacturer": ds.get("Manufacturer", "Unknown"),
             "ImageType": ds.get("ImageType", "Unknown"),
         }
-
-        # Additional tags if they exist
         additional_tags = {
             "PathologyNumber": (0x0008, 0x1064),  # Tag ID for PathologyNumber
             "ImageComments": "ImageComments",  # Keyword for ImageComments
@@ -52,7 +42,6 @@ def extract_relevant_metadata(dicom_data):
 
         return metadata
 
-    # Catch specific pydicom parsing errors
     except (
         pydicom.errors.InvalidDicomError,
         KeyError,
@@ -63,15 +52,7 @@ def extract_relevant_metadata(dicom_data):
 
 
 def process_dicom_objects(prefix="", object_count=0):
-    """Processes DICOM objects in an S3 bucket recursively.
 
-    Args:
-        prefix: The prefix to filter objects in the bucket.
-        object_count: The current count of processed DICOM objects.
-
-    Returns:
-        The total count of processed DICOM objects.
-    """
     paginator = s3.get_paginator("list_objects_v2")
     page_iterator = paginator.paginate(Bucket=BUCKET_NAME, Prefix=prefix)
 
@@ -112,6 +93,4 @@ def process_dicom_objects(prefix="", object_count=0):
 
     return object_count
 
-
-# Start processing from the root of the bucket (no prefix)
 process_dicom_objects()

@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__)
 
-# Function to fetch collections data from the IDC API
+# Fetch collections from IDC API
 def fetch_collections():
     url = "https://api.imaging.datacommons.cancer.gov/v2/collections"
     response = requests.get(url)
