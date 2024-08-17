@@ -15,13 +15,20 @@ def fetch_collections():
 # Fetch collections data dynamically
 collections_data = fetch_collections()
 
-# Get unique cancer types and image types
+# Get unique cancer types
 cancer_types = sorted(set(collection['cancer_type'] for collection in collections_data))
-image_types = sorted(set(it for collection in collections_data for it in collection['image_types'].split(', ')))
 
 @app.route('/')
 def index():
-    return render_template('index.html', cancer_types=cancer_types, image_types=image_types)
+    return render_template('index.html', cancer_types=cancer_types)
+
+@app.route('/get_image_types')
+def get_image_types():
+    selected_cancer_type = request.args.get('cancer_type')
+    image_types = sorted(set(it for collection in collections_data 
+                             if selected_cancer_type in collection.get('cancer_type', '') 
+                             for it in collection['image_types'].split(', ')))
+    return jsonify(image_types)
 
 @app.route('/filter', methods=['POST'])
 def filter_collections():

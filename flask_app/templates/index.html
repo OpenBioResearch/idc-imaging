@@ -108,9 +108,6 @@
         <label for="image_type">Select Image Type:</label>
         <select id="image_type" name="image_type">
             <option value="" disabled selected>Select Image Type</option>
-            {% for type in image_types %}
-                <option value="{{ type }}">{{ type }}</option>
-            {% endfor %}
         </select>
         <br>
         <button type="submit">Filter</button>
@@ -124,11 +121,30 @@
             const cancerTypeSelect = document.getElementById('cancer_type');
             const maxLength = 50; // Set the maximum length for the options
 
+            // Populate cancer types dropdown
             cancerTypes.forEach(type => {
                 const option = document.createElement('option');
                 option.value = type;
                 option.textContent = type.length > maxLength ? type.substring(0, maxLength) + '...' : type;
                 cancerTypeSelect.appendChild(option);
+            });
+
+            // Event listener for cancer type selection change
+            cancerTypeSelect.addEventListener('change', function() {
+                const selectedCancerType = this.value;
+                fetch(`/get_image_types?cancer_type=${encodeURIComponent(selectedCancerType)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const imageTypeSelect = document.getElementById('image_type');
+                        imageTypeSelect.innerHTML = '<option value="" disabled selected>Select Image Type</option>'; // Reset image type dropdown
+
+                        data.forEach(type => {
+                            const option = document.createElement('option');
+                            option.value = type;
+                            option.textContent = type.length > maxLength ? type.substring(0, maxLength) + '...' : type;
+                            imageTypeSelect.appendChild(option);
+                        });
+                    });
             });
         });
 
