@@ -3,15 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>IDC Collections</title>
+    <style>
+        #cancer_type {
+            width: 400px; 
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #cancer_type option {
+            width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
 </head>
 <body>
     <h1>Filter IDC Collections</h1>
     <form id="filter-form">
         <label for="cancer_type">Select Cancer Type:</label>
         <select id="cancer_type" name="cancer_type">
-            {% for type in cancer_types %}
-                <option value="{{ type }}">{{ type }}</option>
-            {% endfor %}
+            <option value="" disabled selected>Select Cancer Type</option>
         </select>
         <br>
         <label for="image_type">Select Image Type:</label>
@@ -27,6 +40,19 @@
     <ul id="collections-list"></ul>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cancerTypes = {{ cancer_types | tojson }};
+            const cancerTypeSelect = document.getElementById('cancer_type');
+            const maxLength = 50; // Set the maximum length for the options
+
+            cancerTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type.length > maxLength ? type.substring(0, maxLength) + '...' : type;
+                cancerTypeSelect.appendChild(option);
+            });
+        });
+
         document.getElementById('filter-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
