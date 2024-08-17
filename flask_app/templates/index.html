@@ -51,7 +51,7 @@
             white-space: nowrap;
         }
 
-        #cancer_type option {
+        #cancer_type option, #image_type option {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -107,6 +107,7 @@
         <br>
         <label for="image_type">Select Image Type:</label>
         <select id="image_type" name="image_type">
+            <option value="" disabled selected>Select Image Type</option>
             {% for type in image_types %}
                 <option value="{{ type }}">{{ type }}</option>
             {% endfor %}
