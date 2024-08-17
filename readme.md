@@ -30,15 +30,30 @@ The Image Data Commons (IDC)  dataset is publicly accessible, so an AWS account 
     pip install -r requirements.txt
     ```
 
-**Run the python scriptS:**
-    idc_collections_filter.py
-    idc_metadata_match.py
-    idc_nonduplicates_metadata.py
+## Running the Python Scripts
 
-**Run the Flask app**
-   cd flask_app
-   python app.py
-   Open a web browser and go to http://127.0.0.1:5000/ to see the filtering interface.
+To run the Python scripts, use the following commands:
+
+```bash
+python idc_collections_filter.py
+python idc_metadata_match.py
+python idc_nonduplicates_metadata.py
+ ```
+## Running the Flask App
+
+To run the Flask app, follow these steps:
+
+1. Navigate to the Flask app directory:
+    ```bash
+    cd flask_app
+    ```
+
+2. Run the app:
+    ```bash
+    python app.py
+    ```
+
+3. Open a web browser and go to [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to see the filtering interface.
 
 **Outputs**
     collections.json
