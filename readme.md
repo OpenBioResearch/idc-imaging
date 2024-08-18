@@ -12,23 +12,23 @@ The Image Data Commons (IDC)  dataset is publicly accessible, so an AWS account 
 
 **Clone the repository:**
 
-    ```bash
-    git clone https://github.com/OpenBioResearch/idc-imaging.git
-    cd idc-imaging
-    ```
+```bash
+git clone https://github.com/OpenBioResearch/idc-imaging.git
+cd idc-imaging
+```
 
 **Create a virtual environment (optional but recommended):**
 
-    ```bash 
-    python -m venv .venv
-    source .venv/bin/activate  # git bash
-    ```
+```bash 
+python -m venv .venv
+source .venv/bin/activate  # git bash
+```
 
 **Install the Python dependencies:**
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+```bash
+pip install -r requirements.txt
+```
 
 ## Running the Python Scripts
 
